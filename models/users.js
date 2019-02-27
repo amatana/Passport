@@ -3,6 +3,9 @@ var db = new Sequelize('postgres://localhost:5432/passport', { logging: false })
 var crypto = require ('crypto')
 
 var User = db.define('user', {
+    username: {
+        type: Sequelize.STRING
+    },
     email: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -17,16 +20,19 @@ var User = db.define('user', {
     salt: {
         type: Sequelize.STRING,
     },
+    usernameVirtual: {
+        type: Sequelize.VIRTUAL,
+        get(){
+            return this.getDataValue("email").split("@")[0]
+        }
+    }
 });
 
-User.hook('beforeValidate',(user,options)=> {
+User.hook('beforeCreate',(user,options)=> {
 user.salt = crypto.randomBytes(20).toString('hex')
 let pass = options.password + user.salt
-console.log(pass)
 pass = crypto.createHash('RSA-SHA256').update(pass).digest('hex')
-console.log(pass,'=======================================')
 user.password = pass
-console.log(user.password,'=======================================')
 })
 
 
